@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>森林固碳能力对比分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", system-ui, sans-serif;
+        }
+
+        :root {
+            --main-green: #388e3c;
+            --light-green: #e8f5e9;
+            --soft-green: #c8e6c9;
+            --text-dark: #263238;
+            --text-gray: #607d8b;
+            --danger: #e53935;
+            --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            --radius: 12px;
+        }
+
+        body {
+            background-color: #f5faf5;
+            padding: 24px 16px;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--main-green);
+            font-size: 30px;
+            margin-bottom: 28px;
+            font-weight: 700;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+        }
+        .card-title {
+            font-size: 18px;
+            color: var(--main-green);
+            margin-bottom: 12px;
+            padding-left: 10px;
+            border-left: 4px solid var(--main-green);
+            font-weight: 700;
+        }
+        .task-desc {
+            font-size: 15px;
+            color: var(--text-gray);
+            margin-bottom: 16px;
+            line-height: 1.7;
+        }
+
+        /* 关卡切换按钮 */
+        .level-nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .btn-level {
+            padding: 10px 30px;
+            background: #fff;
+            color: var(--main-green);
+            border: 2px solid var(--main-green);
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-level.active {
+            background: var(--main-green);
+            color: #fff;
+        }
+        .btn-level:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(56, 142, 60, 0.3);
+        }
+        .btn-level.disabled {
+            border-color: #cccccc;
+            color: #cccccc;
+            background: #f5f5f5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+
+        /* 第一页样式 */
+        .top-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .img-box img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        th, td {
+            padding: 10px 6px;
+            border: 1px solid var(--soft-green);
+            font-size: 14px;
+        }
+        th {
+            background-color: var(--main-green);
+            color: #fff;
+            font-weight: 600;
+        }
+        td input {
+            width: 100%;
+            height: 38px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 0 10px;
+            font-size: 14px;
+            transition: border 0.2s;
+        }
+        td input:focus {
+            outline: none;
+            border-color: var(--main-green);
+        }
+        td input.error {
+            border-color: var(--danger);
+            background: #ffebee;
+        }
+        .total-row {
+            background-color: #f1f8e9;
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 9px 26px;
+            background: var(--main-green);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #2e7d32;
+        }
+
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        .chart {
+            width: 100%;
+            height: 340px;
+        }
+
+        /* 课堂作业：左右两栏 */
+        .exercise-wrap {
+            margin-top: 24px;
+        }
+        .exercise-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .question-col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .question {
+            padding: 18px;
+            border: 1px solid var(--soft-green);
+            border-radius: 8px;
+        }
+        .question.hidden {
+            display: none;
+        }
+        .question h4 {
+            margin-bottom: 12px;
+            font-weight: 700;
+            font-size: 17px;
+        }
+        .options label {
+            display: inline-block;
+            margin-right: 12px;
+            line-height: 2.2;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        .answer-input, .textarea-answer {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 14px;
+            transition: border 0.2s;
+        }
+        .answer-input:focus, .textarea-answer:focus {
+            outline: none;
+            border-color: var(--main-green);
+        }
+        .textarea-answer {
+            height: 120px;
+            resize: none;
+        }
+
+        .answer-col {
+            border: 1px solid var(--soft-green);
+            border-radius: 8px;
+            padding: 20px;
+            background: #fafdfa;
+        }
+        .answer-col h4 {
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--main-green);
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--soft-green);
+        }
+        .explain {
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            margin-bottom: 16px;
+            line-height: 1.8;
+        }
+        .explain.correct {
+            background: var(--light-green);
+            border-left: 4px solid var(--main-green);
+        }
+        .explain.wrong {
+            background: #ffebee;
+            border-left: 4px solid var(--danger);
+        }
+        .exp-judge {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .exp-judge.correct { color: var(--main-green); }
+        .exp-judge.wrong { color: var(--danger); }
+        .exp-reason {
+            font-weight: 400;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            display: block;
+        }
+        .exp-reason .label {
+            font-weight: 600;
+            color: var(--text-gray);
+        }
+        .exp-supplement {
+            font-weight: 600;
+            color: var(--main-green);
+            display: block;
+        }
+        .exp-supplement.wrong {
+            color: var(--danger);
+        }
+
+        .task-two-tip {
+            font-size: 15px;
+            color: var(--text-gray);
+            margin: 10px 0 18px;
+        }
+
+        /* 下一关按钮 */
+        .next-level-box {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .btn-next {
+            padding: 12px 40px;
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(56, 142, 60, 0.4);
+            transition: all 0.3s;
+        }
+        .btn-next:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(56, 142, 60, 0.5);
+        }
+
+        /* ========== 弹窗样式 ========== */
+        .mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-box {
+            background: #fff;
+            width: 600px;
+            max-width: 90%;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-dark);
+        }
+        .modal-text {
+            font-size: 16px;
+            line-height: 1.7;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+        .error-guide-block {
+            background: #fff8e1;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            text-align: left;
+            border-left:4px solid #f57c00;
+        }
+        .error-guide-block h5 {
+            color:#f57c00;
+            font-size:16px;
+            margin-bottom:8px;
+        }
+        .count-down-text {
+            color: var(--danger);
+            font-weight: 600;
+            font-size: 18px;
+            margin:15px 0;
+        }
+        .modal-btn-group {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+        .modal-btn {
+            padding: 10px 28px;
+            border-radius: 6px;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .btn-confirm {
+            background: var(--main-green);
+            color: white;
+        }
+        .btn-cancel {
+            background: #eee;
+            color: #333;
+        }
+
+        /* ========== 第二页样式 ========== */
+        .level2-content {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* 模块一：文字素材 + 底图 */
+        .material-card {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+        }
+        .material-text {
+            background: var(--light-green);
+            border-left: 5px solid var(--main-green);
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--text-dark);
+        }
+        .material-text strong {
+            color: var(--main-green);
+            font-weight: 700;
+        }
+        .material-img {
+            width: 100%;
+            border-radius: 10px;
+            display: block;
+            border: 2px solid var(--soft-green);
+        }
+
+        /* 模块二：课堂作业 左右两栏 */
+        .homework-card {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+        }
+        .homework-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .homework-question {
+            padding: 20px;
+            border: 1px solid var(--soft-green);
+            border-radius: 8px;
+        }
+        .homework-question h4 {
+            font-weight: 700;
+            font-size: 17px;
+            margin-bottom: 16px;
+            line-height: 1.7;
+        }
+        .homework-answer {
+            border: 1px solid var(--soft-green);
+            border-radius: 8px;
+            padding: 20px;
+            background: #fafdfa;
+        }
+        .homework-answer h4 {
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--main-green);
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--soft-green);
+        }
+
+        /* 填空题样式 */
+        .fill-blank-question {
+            font-size: 16px;
+            line-height: 2.2;
+            margin-bottom: 16px;
+        }
+        .blank-input {
+            width: 100px;
+            height: 32px;
+            border: none;
+            border-bottom: 2px solid var(--main-green);
+            text-align: center;
+            font-size: 15px;
+            background: transparent;
+            margin: 0 4px;
+            transition: all 0.2s;
+        }
+        .blank-input:focus {
+            outline: none;
+            border-bottom-color: #2e7d32;
+            background: var(--light-green);
+        }
+        .blank-input.correct {
+            color: var(--main-green);
+            font-weight: 600;
+            border-bottom-color: var(--main-green);
+        }
+        .blank-input.wrong {
+            color: var(--danger);
+            border-bottom-color: var(--danger);
+            background: #ffebee;
+        }
+        .difficulty-tip {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #fff3e0;
+            color: #e65100;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .difficulty-tip.hard {
+            background: var(--light-green);
+            color: var(--main-green);
+        }
+
+        @media (max-width: 992px) {
+            .chart-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            .top-row, .exercise-layout, .homework-layout {
+                grid-template-columns: 1fr;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            th, td {
+                padding: 8px 4px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌳 不同森林固碳能力对比分析</h1>
+
+    <!-- 关卡导航 -->
+    <div class="level-nav">
+        <button class="btn-level active" onclick="switchLevel(1)">第一关：森林固碳对比</button>
+        <button class="btn-level disabled" id="levelTwoBtn" onclick="switchLevel(2)">第二关：热带雨林探秘</button>
+    </div>
+
+    <!-- ========== 弹窗容器 ========== -->
+    <div class="mask" id="modalMask">
+        <div class="modal-box" id="modalBox">
+            <h3 class="modal-title" id="modalTitle"></h3>
+            <div class="modal-text" id="modalContent"></div>
+            <div class="error-guide-block" id="guideBlock" style="display:none;">
+                <h5>📚 错题溯源与学习指导</h5>
+                <div id="guideText"></div>
+            </div>
+            <div class="count-down-text" id="countText" style="display:none;"></div>
+            <div class="modal-btn-group" id="modalBtnGroup"></div>
+        </div>
+    </div>
+
+    <!-- ========== 第一页 ========== -->
+    <div class="page active" id="page1">
+        <div class="top-row">
+            <div class="card img-box">
+                <h3 class="card-title">不同热量带的森林碳储量示意图</h3>
+                <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/9db7e4548a6441a7a90c839bbf9ddfcc.png~tplv-a9rns2rl98-image.png?lk3s=8e244e95&rcl=2026060914284129D8A9C76D2E84840CA0&rrcfp=dafada99&x-expires=2097210521&x-signature=zBEtmt%2FYsF%2Bd3%2FxRouRjcOTVNkg%3D" alt="参考底图">
+            </div>
+
+            <div class="card input-box">
+                <h3 class="card-title">不同热量带森林比较表</h3>
+                <p class="task-desc">第1题：输入不同热量带的森林相关的数据信息进行计算和比较，生成对应的统计图。</p>
+                <div class="formula-box" style="margin-bottom:16px;padding:12px;background:var(--light-green);border-left:6px solid var(--main-green);border-radius:8px;">
+                    <p><strong>单位面积碳储量计算公式：</strong>
+                        <span class="formula" style="font-weight:600;color:#c62828;font-size:16px;">单位面积碳储量(吨/公顷) = 碳储量(亿吨) × 10000 ÷ 森林面积(万公顷)</span></p>
+                </div>
+                <table>
+                    <tr>
+                        <th>森林类型</th>
+                        <th>面积（万公顷）</th>
+                        <th>碳储量（亿吨）</th>
+                        <th>单位面积碳储量<br/>(吨/公顷)</th>
+                        <th>碳储量占比</th>
+                    </tr>
+                    <tr>
+                        <td>寒带森林</td>
+                        <td><input class="area" type="number" value="0"></td>
+                        <td><input class="carbon" type="number" value="0"></td>
+                        <td class="capacity">0.00</td>
+                        <td class="percent">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td>温带森林</td>
+                        <td><input class="area" type="number" value="0"></td>
+                        <td><input class="carbon" type="number" value="0"></td>
+                        <td class="capacity">0.00</td>
+                        <td class="percent">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td>亚热带森林</td>
+                        <td><input class="area" type="number" value="0"></td>
+                        <td><input class="carbon" type="number" value="0"></td>
+                        <td class="capacity">0.00</td>
+                        <td class="percent">0.00%</td>
+                    </tr>
+                    <tr>
+                        <td>热带森林</td>
+                        <td><input class="area" type="number" value="0"></td>
+                        <td><input class="carbon" type="number" value="0"></td>
+                        <td class="capacity">0.00</td>
+                        <td class="percent">0.00%</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>全球森林汇总</td>
+                        <td class="total-area">0</td>
+                        <td class="total-carbon">0</td>
+                        <td>—</td>
+                        <td>100.00%</td>
+                    </tr>
+                </table>
+                <button class="btn" onclick="checkTable()">检查答案</button>
+            </div>
+        </div>
+
+        <div class="chart-row">
+            <div class="card">
+                <h3 class="card-title">森林面积分布</h3>
+                <div id="areaChart" class="chart"></div>
+            </div>
+            <div class="card">
+                <h3 class="card-title">森林碳储量分布</h3>
+                <div id="carbonChart" class="chart"></div>
+            </div>
+            <div class="card">
+                <h3 class="card-title">森林单位面积碳储量</h3>
+                <div id="capacityChart" class="chart"></div>
+            </div>
+        </div>
+
+        <div class="card exercise-wrap">
+            <h3 class="card-title">📝 课堂作业</h3>
+            <p class="task-two-tip">第2题：分析不同热量带的森林信息的统计图表，完成下列小题。</p>
+
+            <div class="exercise-layout">
+                <div class="question-col">
+                    <div class="question" id="q1">
+                        <h4>（1）根据图表分析，固碳能力最强的森林类型是（单选题）</h4>
+                        <div class="options">
+                            <label><input type="radio" name="q1" value="温带森林">温带森林</label>
+                            <label><input type="radio" name="q1" value="寒带森林">寒带森林</label>
+                            <label><input type="radio" name="q1" value="热带森林">热带森林</label>
+                            <label><input type="radio" name="q1" value="亚热带森林">亚热带森林</label>
+                        </div>
+                        <button class="btn" onclick="checkQ1()">检查答案</button>
+                    </div>
+
+                    <div class="question hidden" id="q2">
+                        <h4>（2）简述热带森林在全球森林固碳中的贡献：</h4>
+                        <textarea class="textarea-answer" id="ans2" placeholder="输入你的答案"></textarea>
+                        <button class="btn" onclick="checkQ2()">检查答案</button>
+                    </div>
+                </div>
+
+                <div class="answer-col">
+                    <h4>📖 参考答案与解析</h4>
+                    <div class="explain" id="exp1"></div>
+                    <div class="explain" id="exp2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="next-level-box">
+            <button class="btn-next" onclick="goNextLevel()">下一关 → 热带雨林探秘</button>
+        </div>
+    </div>
+
+    <!-- ========== 第二页 ========== -->
+    <div class="page" id="page2">
+        <div class="level2-content">
+            <div class="material-card">
+                <h3 class="card-title">🌿 热带雨林知识拓展</h3>
+                <div class="material-text">
+                    热带的森林主要为<strong>热带雨林</strong>，热带雨林占据全球陆地的<strong>7%左右</strong>，储存着全球植被碳库的<strong>50%以上</strong>。
+                </div>
+                <img class="material-img" src="https://aka.doubaocdn.com/s/RTd31wezP9" alt="热带雨林分布图与气候资料">
+            </div>
+
+            <div class="homework-card">
+                <h3 class="card-title">📝 课堂作业</h3>
+                <p class="task-two-tip">第3题：结合图文资料与光合作用原理，完成下列分析题。</p>
+
+                <div class="homework-layout">
+                    <div class="homework-question">
+                        <span class="difficulty-tip hard" id="difficultyTip">⭐ 挑战模式 · 简述题</span>
+                        
+                        <div id="essayMode">
+                            <h4>读图，结合光合作用原理，从气候角度分析热带雨林固碳能力最强的原因：</h4>
+                            <textarea class="textarea-answer" id="ans3" placeholder="请从气候角度，结合光合作用原理分析..."></textarea>
+                            <button class="btn" onclick="checkQ3()">检查答案</button>
+                        </div>
+
+                        <div id="fillMode" style="display:none;">
+                            <h4>读图，结合光合作用原理，从气候角度梳理热带雨林固碳能力最强的完整原因，完成填空：</h4>
+                            <div class="fill-blank-question">
+                                热带雨林大多分布在
+                                <input class="blank-input" id="blank1" type="text" placeholder="____">
+                                周边区域，该区域纬度偏低，能够获得充足的光照；当地典型的气候特征为
+                                <input class="blank-input" id="blank2" type="text" placeholder="____">
+                                ，水热组合条件十分优越；优越的水热条件可以促使植物的
+                                <input class="blank-input" id="blank3" type="text" placeholder="____">
+                                作用持续强烈进行，植被全年旺盛生长，群落结构茂密、生物总量庞大，最终造就了极强的固碳能力。
+                            </div>
+                            <button class="btn" onclick="checkFillBlanks()">检查答案</button>
+                        </div>
+                    </div>
+
+                    <div class="homework-answer">
+                        <h4>📖 参考答案与解析</h4>
+                        <div class="explain" id="exp3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="next-level-box">
+                <button class="btn-next" onclick="switchLevel(1)">← 返回第一关</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ========== 全局状态 ==========
+let q1Correct = false;
+let q2Correct = false;
+let q1Finished = false;
+
+const standardData = [
+    { area:1600, carbon:17.1 },
+    { area:900, carbon:15.4 },
+    { area:460, carbon:8.0 },
+    { area:4000, carbon:88.0 }
+];
+
+const areaChart = echarts.init(document.getElementById('areaChart'));
+const carbonChart = echarts.init(document.getElementById('carbonChart'));
+const capacityChart = echarts.init(document.getElementById('capacityChart'));
+
+const types = ['寒带森林','温带森林','亚热带森林','热带森林'];
+const colors = ['#4caf50','#8bc34a','#cddc39','#2e7d32'];
+
+const commonLegend = {
+    orient: 'horizontal',
+    bottom: 10,
+    left: 'center',
+    data: types
+};
+
+function closeModal() {
+    document.getElementById('modalMask').style.display = 'none';
+}
+
+function openModal(title, content, guideText, showCountdown, countNum, callback) {
+    const mask = document.getElementById('modalMask');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContent');
+    const guideBlock = document.getElementById('guideBlock');
+    const guideTextDom = document.getElementById('guideText');
+    const countText = document.getElementById('countText');
+    const btnGroup = document.getElementById('modalBtnGroup');
+
+    modalTitle.innerText = title;
+    modalContent.innerText = content;
+    mask.style.display = 'flex';
+    countText.style.display = 'none';
+    btnGroup.innerHTML = '';
+
+    if(guideText){
+        guideBlock.style.display = 'block';
+        guideTextDom.innerHTML = guideText;
+    }else{
+        guideBlock.style.display = 'none';
+    }
+
+    if (showCountdown) {
+        let timer = countNum;
+        countText.style.display = 'block';
+        countText.innerText = `剩余${timer}秒后可进入`;
+        const timerFn = setInterval(()=>{
+            timer--;
+            countText.innerText = `剩余${timer}秒后可进入`;
+            if(timer <= 0) {
+                clearInterval(timerFn);
+                countText.style.display = 'none';
+                btnGroup.innerHTML = `<button class="modal-btn btn-confirm" onclick="${callback}">进入基础关</button>`;
+            }
+        }, 1000);
+    } else {
+        btnGroup.innerHTML = `
+            <button class="modal-btn btn-cancel" onclick="closeModal()">取消</button>
+            <button class="modal-btn btn-confirm" onclick="${callback}">确定进入</button>
+        `;
+    }
+}
+
+function goNextLevel() {
+    if(q1Correct && q2Correct) {
+        openModal('关卡提示','第一关全对，是否要进入挑战关？',null,false,0,'confirmGoChallenge()');
+    } else {
+        let errorGuideHtml = '';
+        if(!q1Correct){
+            errorGuideHtml += `<p>✅ 第（1）题错题复盘：本题核心考点为不同热量带森林固碳量对比，正确答案为热带森林。<br>学习建议：对照图表查看碳储量柱状图，对比四类森林单位面积固碳数值，记住热带森林固碳总量和单位固碳量均最高。</p>`;
+        }
+        if(!q2Correct){
+            errorGuideHtml += `<p>✅ 第（2）题错题复盘：本题核心考点为热带森林在全球碳库中的地位。<br>学习建议：重点记忆三个得分关键词：碳储量占比最高、总面积最大、全球固碳核心，作答时包含任意关键词即可得分。</p>`;
+        }
+        errorGuideHtml += `<p style="margin-top:10px;">💡 整体学习建议：先重新查看第一关的三张统计图表，理清四类森林碳储量差异后，再进入基础模式完成填空练习，巩固知识点。</p>`;
+
+        openModal('错题溯源分析','第一关存在错题，请认真查看下方错题梳理与学习建议，倒计时结束后才可进入基础关',errorGuideHtml,true,5,'confirmGoBase()');
+    }
+}
+
+function confirmGoChallenge() {
+    closeModal();
+    switchLevel(2);
+}
+
+function confirmGoBase() {
+    closeModal();
+    switchLevel(2);
+}
+
+function switchLevel(n) {
+    if(n === 2 && !q1Finished){
+        alert('请先完成第（1）题的作答并核对答案后，再切换关卡');
+        return;
+    }
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page' + n).classList.add('active');
+    document.querySelectorAll('.btn-level').forEach((b, i) => {
+        b.classList.toggle('active', i === n - 1);
+    });
+    
+    if(n === 2) {
+        updateQ3Difficulty();
+    }
+    
+    if(n === 1) {
+        setTimeout(() => {
+            areaChart.resize();
+            carbonChart.resize();
+            capacityChart.resize();
+        }, 100);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateQ3Difficulty() {
+    const essayMode = document.getElementById('essayMode');
+    const fillMode = document.getElementById('fillMode');
+    const difficultyTip = document.getElementById('difficultyTip');
+    
+    if(q1Correct && q2Correct) {
+        essayMode.style.display = 'block';
+        fillMode.style.display = 'none';
+        difficultyTip.className = 'difficulty-tip hard';
+        difficultyTip.innerText = '⭐ 挑战模式 · 简述题';
+    } else {
+        essayMode.style.display = 'none';
+        fillMode.style.display = 'block';
+        difficultyTip.className = 'difficulty-tip';
+        difficultyTip.innerText = '💡 基础模式 · 填空题';
+    }
+}
+
+function getData() {
+    const area = [], carbon = [], capacity = [], percent = [];
+    const aIn = document.querySelectorAll('.area');
+    const cIn = document.querySelectorAll('.carbon');
+    let totalArea = 0, totalCarbon = 0;
+
+    for(let i=0;i<4;i++){
+        let a = +aIn[i].value || 0;
+        let c = +cIn[i].value || 0;
+        area.push(a);
+        carbon.push(c);
+        totalArea += a;
+        totalCarbon += c;
+
+        let cap = a===0 ? 0 : (c*10000)/a;
+        capacity.push(+cap.toFixed(2));
+        document.querySelectorAll('.capacity')[i].innerText = cap.toFixed(2);
+    }
+
+    for(let i=0;i<4;i++){
+        let pct = totalCarbon === 0 ? 0 : (carbon[i] / totalCarbon * 100);
+        percent.push(+pct.toFixed(2));
+        document.querySelectorAll('.percent')[i].innerText = pct.toFixed(2) + '%';
+    }
+
+    document.querySelector('.total-area').innerText = totalArea;
+    document.querySelector('.total-carbon').innerText = totalCarbon.toFixed(1);
+
+    return { area, carbon, capacity, percent, totalArea, totalCarbon };
+}
+
+function renderCharts() {
+    const { area, carbon, capacity } = getData();
+    const pieSeries = {
+        type:'pie',
+        radius:['40%','70%'],
+        label:{show:false},
+        labelLine:{show:false}
+    };
+
+    areaChart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}：{c} 万公顷' },
+        legend: commonLegend,
+        series: [{...pieSeries, data: area.map((v,i)=>({name:types[i], value:v, itemStyle:{color:colors[i]}}))}]
+    });
+
+    carbonChart.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}：{c} 亿吨' },
+        legend: commonLegend,
+        series: [{...pieSeries, data: carbon.map((v,i)=>({name:types[i], value:v, itemStyle:{color:colors[i]}}))}]
+    });
+
+    capacityChart.setOption({
+        tooltip: { trigger: 'axis', formatter: '{b}：{c} 吨/公顷' },
+        xAxis:{data:types}, yAxis:{type:'value', name:'吨/公顷'},
+        series:[{type:'bar', barWidth: '40%', data: capacity.map((v,i)=>({value:v, itemStyle:{color:colors[i]}}))}]
+    });
+}
+
+function checkTable() {
+    const aIn = document.querySelectorAll('.area');
+    const cIn = document.querySelectorAll('.carbon');
+    for(let i=0;i<4;i++){
+        aIn[i].classList.remove('error');
+        cIn[i].classList.remove('error');
+        if(+aIn[i].value !== standardData[i].area){ aIn[i].classList.add('error'); aIn[i].value = standardData[i].area; }
+        if(+cIn[i].value !== standardData[i].carbon){ cIn[i].classList.add('error'); cIn[i].value = standardData[i].carbon; }
+    }
+    renderCharts();
+}
+
+// 第（1）题
+function checkQ1() {
+    const exp = document.getElementById('exp1');
+    const sel = [...document.querySelectorAll('input[name="q1"]')].find(i=>i.checked)?.value || '';
+    
+    q1Correct = (sel === '热带森林');
+    q1Finished = true;
+    document.getElementById('levelTwoBtn').classList.remove('disabled');
+    
+    if(q1Correct){
+        exp.className = 'explain correct';
+        exp.innerHTML = `
+            <span class="exp-judge correct">✓ 回答正确</span>
+            <span class="exp-reason"><span class="label">错因分析：</span>温带、寒带、亚热带森林的碳储量总量和单位面积固碳能力均远低于热带森林，不是固碳能力最强的类型。</span>
+            <span class="exp-supplement">补充说明：本题唯一正确答案为热带森林，它在碳储量总量和单位面积固碳上均居首位。</span>
+        `;
+    }else{
+        exp.className = 'explain wrong';
+        exp.innerHTML = `
+            <span class="exp-judge wrong">✗ 回答错误</span>
+            <span class="exp-reason"><span class="label">错因分析：</span>你选择的森林类型在碳储量和单位面积固碳能力上均低于热带森林，不符合图表数据反映的实际情况。</span>
+            <span class="exp-supplement wrong">正确答案：热带森林 —— 碳储量占比最高、单位面积固碳能力最强，是固碳能力最强的森林类型。</span>
+        `;
+    }
+    exp.style.display = 'block';
+    document.getElementById('q2').classList.remove('hidden');
+}
+
+// 第（2）题：判分放宽
+function checkQ2() {
+    const exp = document.getElementById('exp2');
+    const val = document.getElementById('ans2').value.trim();
+    
+    const looseKeys = [
+        '碳储量','固碳','贡献','最大','最多','最高','占比','面积大','重要','核心','主导','主要','第一','作用大','地位高','全球'
+    ];
+    
+    const hasTropical = val.includes('热带') || val.includes('雨林');
+    const hasPositive = looseKeys.some(k => val.includes(k));
+    q2Correct = hasTropical && hasPositive;
+
+    if(q2Correct){
+        exp.className = 'explain correct';
+        exp.innerHTML = `
+            <span class="exp-judge correct">✓ 回答正确</span>
+            <span class="exp-reason"><span class="label">错因分析：</span>无</span>
+            <span class="exp-supplement">补充拓展：热带森林碳储量占全球森林总碳储量比例最高、森林总面积最大、单位面积碳储量高，是全球森林固碳的核心主导力量。</span>
+        `;
+    } else {
+        exp.className = 'explain wrong';
+        exp.innerHTML = `
+            <span class="exp-judge wrong">✗ 回答错误</span>
+            <span class="exp-reason"><span class="label">错因分析：</span>未结合图表数据描述热带森林的固碳优势，答题偏离考点。</span>
+            <span class="exp-supplement wrong">正确答案要点：热带森林面积全球最大、碳储量全球最高、单位面积固碳能力强，是全球森林固碳的核心和主导力量。</span>
+        `;
+    }
+    exp.style.display = 'block';
+}
+
+// 第3题：简述题模式
+function checkQ3() {
+    const exp = document.getElementById('exp3');
+    const val = document.getElementById('ans3').value.trim();
+    
+    const locationKeys = ['赤道','赤道附近','低纬度','纬度低'];
+    const lightKeys = ['光照充足','光照强','太阳辐射强'];
+    const climateKeys = ['全年高温多雨','高温','全年高温','热量充足','多雨','水热充足','湿热','热带雨林气候'];
+    const photoKeys = ['光合作用','光合','生长快','生长旺盛','生物量大','植物多','植被茂密','全年生长'];
+    
+    const hasLocation = locationKeys.some(k => val.includes(k));
+    const hasLight = lightKeys.some(k => val.includes(k));
+    const hasClimate = climateKeys.some(k => val.includes(k));
+    const hasPhoto = photoKeys.some(k => val.includes(k));
+    
+    const isFullCorrect = (hasLocation || hasLight) && hasClimate && hasPhoto;
+    const correctCount = [hasLocation||hasLight, hasClimate, hasPhoto].filter(Boolean).length;
+    const isPartialCorrect = correctCount >= 1 && !isFullCorrect;
+
+    if(isFullCorrect){
+        exp.className = 'explain correct';
+        exp.innerHTML = `
+            <span class="exp-judge correct">✓ 回答正确</span>
+            <span class="exp-reason"><span class="label">错因分析：</span>无</span>
+            <span class="exp-supplement">补充拓展：①地理位置：热带雨林主要分布在赤道附近，纬度低，光照充足；②气候条件：属于热带雨林气候，气候特征为全年高温多雨，水热条件极其优越；③光合作用：充足的光照、适宜的高温和充沛的降水，使植物光合作用强烈，全年生长旺盛，植被茂密、生物量巨大，因此固碳能力最强。</span>
+        `;
+    } else if(isPartialCorrect) {
+        exp.className = 'explain correct';
+        exp.innerHTML = `
+            <span class="exp-judge correct">✓ 答案正确但不完整</span>
+            <span class="exp-reason"><span class="label">错因分析：</span>答题角度不够全面，只涉及了部分要点，未完整覆盖地理位置、气候、光合作用三个层面。</span>
+            <span class="exp-supplement">补充完整：需从三个角度全面分析——①位置与光照：热带雨林位于赤道附近，光照充足；②气候：热带雨林气候全年高温多雨，水热充足；③光合作用：优越的水热光照条件使植物光合作用强烈，全年生长旺盛，生物量大，植被茂密，固碳能力最强。</span>
+        `;
+    } else {
+        exp.className = 'explain wrong';
+        exp.innerHTML = `
+            <span class="exp-judge wrong">✗ 回答错误</span>
+            <span class="exp-reason"><span class="label">错因分析：</span>未从气候角度结合光合作用原理进行分析，也未涉及地理位置和光照条件，答题偏离题目要求的核心角度。</span>
+            <span class="exp-supplement wrong">正确答案要点：①赤道附近，光照充足；②气候全年高温多雨，水热充足；③植物光合作用强烈，全年生长旺盛，植被茂密、生物量大，固碳能力最强。</span>
+        `;
+    }
+    exp.style.display = 'block';
+}
+
+// ========== 第3题：填空题模式（修改版：错误不自动修改+具体错因分析）==========
+function checkFillBlanks() {
+    const exp = document.getElementById('exp3');
+    
+    // 三个空的标准答案与解析
+    const blankInfo = {
+        blank1: {
+            answer: '赤道',
+            label: '第1空（地理位置）',
+            reason: '考察热带雨林的分布位置，热带雨林主要分布在赤道附近，这是其光照充足的根本原因。'
+        },
+        blank2: {
+            answer: '全年高温多雨',
+            label: '第2空（气候特征）',
+            reason: '考察热带雨林气候的典型特征，全年高温多雨是水热条件优越的直接体现，也是植物生长旺盛的气候基础。'
+        },
+        blank3: {
+            answer: '光合',
+            label: '第3空（生理作用）',
+            reason: '考察光合作用原理，植物通过光合作用吸收二氧化碳、释放氧气，是森林固碳的核心生理机制。'
+        }
+    };
+    
+    let correctCount = 0;
+    const total = 3;
+    let wrongDetails = ''; // 收集具体错因
+    
+    // 逐个校验填空，错误只标红不修改
+    for(let i = 1; i <= 3; i++) {
+        const input = document.getElementById('blank' + i);
+        const val = input.value.trim();
+        const info = blankInfo['blank' + i];
+        const isRight = val === info.answer || val.includes(info.answer);
+        
+        if(isRight) {
+            input.classList.remove('wrong');
+            input.classList.add('correct');
+            correctCount++;
+        } else {
+            input.classList.remove('correct');
+            input.classList.add('wrong');
+            // 收集错因
+            wrongDetails += `<p><strong>${info.label}：</strong>你的答案「${val || '未填写'}」错误。${info.reason}<br>正确答案：<strong style="color:var(--main-green);">${info.answer}</strong></p>`;
+        }
+    }
+    
+    // 显示解析
+    if(correctCount === total) {
+        exp.className = 'explain correct';
+        exp.innerHTML = `
+            <span class="exp-judge correct">✓ 全部正确（${correctCount}/${total}）</span>
+            <span class="exp-reason"><span class="label">错因分析：</span>无</span>
+            <span class="exp-supplement">补充拓展：完整逻辑链——赤道附近 → 光照充足 → 全年高温多雨的热带雨林气候、水热充足 → 光合作用强烈 → 生长旺盛、生物量大 → 固碳能力最强。</span>
+        `;
+    } else {
+        exp.className = 'explain wrong';
+        exp.innerHTML = `
+            <span class="exp-judge wrong">✗ 答对 ${correctCount}/${total} 个空</span>
+            <span class="exp-reason"><span class="label">具体错因分析：</span></span>
+            ${wrongDetails}
+            <span class="exp-supplement" style="margin-top:10px;">记忆口诀：赤道光照足，气候高温雨，光合作用旺，固碳能力强。</span>
+        `;
+    }
+    exp.style.display = 'block';
+}
+
+// ========== 初始化渲染图表 ==========
+renderCharts();
+document.querySelectorAll('.area,.carbon').forEach(i=>i.addEventListener('input',renderCharts));
+window.addEventListener('resize',()=>{
+    areaChart.resize();
+    carbonChart.resize();
+    capacityChart.resize();
+});
+</script>
+</body>
+</html>
